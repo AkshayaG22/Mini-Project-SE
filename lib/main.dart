@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../screens/login_screen.dart'; // if you put LoginScreen in a separate file
+import 'package:flutter_application_1/screens/create_acc.dart';
+import 'package:flutter_application_1/screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,11 +16,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginScreen(
-        onSignedIn: () {
-          // For now, just show a snackbar or navigate
-          print("Signed in!");
-        },
+      home: Builder(
+        builder: (context) => LoginScreen(
+          onSignedIn: () {},
+          onCreateAccount: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (context) => CreateAccountScreen(
+                onAccountCreated: () => Navigator.of(context).pop(),
+                onBackToLogin: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

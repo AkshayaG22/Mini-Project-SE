@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:flutter/rendering.dart";
+// import "package:flutter/rendering.dart";
 
 const _blue = Color(0xFF0D57D5);
 const _canvas = Color(0xFFF8FAFC);
@@ -7,10 +7,10 @@ const _canvas = Color(0xFFF8FAFC);
 
 class LoginScreen extends StatefulWidget {
   
-  const LoginScreen({required this.onSignedIn, super.key});
+  const LoginScreen({required this.onSignedIn, required this.onCreateAccount, super.key});
 
   final VoidCallback onSignedIn;
-
+  final VoidCallback onCreateAccount;
   @override
   
   State<LoginScreen> createState() => _LoginScreenState();
@@ -206,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],),
                   const SizedBox(height:18),
                   OutlinedButton(
-                    onPressed: ()=> _showRegistrationMessage(context),
+                    onPressed: widget.onCreateAccount,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                       side: BorderSide(color:Color(0xFFCBD5E1)),
