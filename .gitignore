@@ -48,3 +48,4 @@ app.*.map.json
 .widget_preview/
 backend/venv/
 backend/__pycache__/
+backend/.env
