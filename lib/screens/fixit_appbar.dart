@@ -4,6 +4,10 @@ import "../widgets/fixit_widgets.dart";
 
 //import others when doing the other buttons!
 import 'homescreen.dart';
+import 'explore_screen.dart';
+import 'reports_screen.dart';
+import 'profile_screen.dart';
+import 'report_hazard_sheet.dart';
 
 class FixItShell extends StatefulWidget {
   const FixItShell({super.key});
@@ -71,26 +75,50 @@ class _FixItShellState extends State<FixItShell> {
         index: currentIndex,
         children: [
           Homescreen(),
-          // ExploreScreen(),
-          // ReportsScreen(),
-          // ProfileScreen(),
+          ExploreScreen(),
+          ReportsScreen(),
+          ProfileScreen(),
         ],
       ),
       //for the report button! [bug]
       
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () => showModalBottomSheet<void>(
-      //     context: context,
-      //     isScrollControlled: true,
-      //     showDragHandle: true,
-      //     backgroundColor: canvas,
-      //     builder: (_) => const ReportHazardSheet(),
-      //   ),
-      //   backgroundColor: blue,
-      //   foregroundColor: Colors.white,
-      //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      //   child: const Icon(Icons.add_rounded, size: 30),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          showDragHandle: true,
+          backgroundColor: canvas,
+          builder: (_) => const ReportHazardSheet(),
+        ),
+        backgroundColor: blue,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: const Icon(Icons.add_rounded, size: 30),
+      ),
+    //   floatingActionButton: FloatingActionButton(
+    //     onPressed: () => showModalBottomSheet<void>(
+    //       context: context,
+    //       isScrollControlled: true,
+    //       showDragHandle: true,
+    //       backgroundColor: canvas,
+    //       builder: (_) {
+    //         // 👇 You must return a widget here
+    //         return Container(
+    //           padding: const EdgeInsets.all(20),
+    //           child: const Text(
+    //             "This is a placeholder bottom sheet",
+    //             style: TextStyle(fontSize: 16),
+    //           ),
+    //         );
+    //       },
+    //     ),
+    //     backgroundColor: blue,
+    //     foregroundColor: Colors.white,
+    //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    //     child: const Icon(Icons.add_rounded, size: 30),
+    // ),
+
+      
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
