@@ -10,6 +10,35 @@ const drainPhoto =
     "https://images.unsplash.com/photo-1789018944661-3592583cee58?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&w=700";
 
 //temperory drawing the map!
+// class HazardMap extends StatelessWidget {
+//   const HazardMap({required this.height, this.expanded = false, super.key});
+//   final double height;
+//   final bool expanded;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: height,
+//       clipBehavior: Clip.antiAlias,
+//       decoration: BoxDecoration(
+//         color: const Color(0xFFE4EDE8),
+//         borderRadius: BorderRadius.circular(28),
+//         border: Border.all(color: const Color(0xFFD9E3DE)),
+//       ),
+//       child: CustomPaint(
+//         painter: MapPainter(),
+//         child: Stack(
+//           children: [
+//             const Positioned(left: 80, top: 75, child: MapPin(color: Color(0xFFF59E0B), label: "3")),
+//             Positioned(right: 62, top: expanded ? 170 : 65, child: const MapPin(color: Color(0xFFEF4444), label: "5")),
+//             Positioned(left: 180, bottom: expanded ? 110 : 32, child: const MapPin(color: blue, icon: Icons.location_on)),
+//             if (expanded) const Positioned(left: 48, bottom: 115, child: MapPin(color: Color(0xFFF59E0B), label: "2")),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 class HazardMap extends StatelessWidget {
   const HazardMap({required this.height, this.expanded = false, super.key});
   final double height;
@@ -19,21 +48,17 @@ class HazardMap extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFFE4EDE8),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFD9E3DE)),
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: CustomPaint(
-        painter: MapPainter(),
-        child: Stack(
-          children: [
-            const Positioned(left: 80, top: 75, child: MapPin(color: Color(0xFFF59E0B), label: "3")),
-            Positioned(right: 62, top: expanded ? 170 : 65, child: const MapPin(color: Color(0xFFEF4444), label: "5")),
-            Positioned(left: 180, bottom: expanded ? 110 : 32, child: const MapPin(color: blue, icon: Icons.location_on)),
-            if (expanded) const Positioned(left: 48, bottom: 115, child: MapPin(color: Color(0xFFF59E0B), label: "2")),
-          ],
+      child: const Text(
+        "Map placeholder",
+        style: TextStyle(
+          color: Color(0xFF64748B),
+          fontSize: 13,
+          decoration: TextDecoration.none,
         ),
       ),
     );
