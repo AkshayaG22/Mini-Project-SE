@@ -1,6 +1,7 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class FixItApi {
   static const String baseUrl = 'http://127.0.0.1:8000';
@@ -46,4 +47,33 @@ class FixItApi {
 
     return jsonDecode(response.body) as List<dynamic>;
   }
+  
+Future<Map<String, dynamic>> uploadReportImage({
+  required int reportId,
+  required XFile image,
+}) async {
+  final bytes = await image.readAsBytes();
+
+  final request = http.MultipartRequest(
+    'POST',
+    Uri.parse('$baseUrl/reports/$reportId/image'),
+  );
+
+  request.files.add(
+    http.MultipartFile.fromBytes(
+      'image',
+      bytes,
+      filename: image.name,
+    ),
+  );
+
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (response.statusCode != 200) {
+    throw Exception('Image upload failed: ${response.body}');
+  }
+
+  return jsonDecode(response.body) as Map<String, dynamic>;
+}
 }

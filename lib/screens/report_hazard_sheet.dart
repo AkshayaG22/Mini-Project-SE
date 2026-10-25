@@ -1,6 +1,10 @@
 
+import "dart:typed_data";
+
 import "package:flutter/material.dart";
 import "package:geolocator/geolocator.dart";
+import "package:image_picker/image_picker.dart";
+
 import "../services/fixit_api.dart";
 import "../widgets/fixit_widgets.dart";
 
@@ -15,14 +19,18 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
 
+  final ImagePicker imagePicker = ImagePicker();
+  final FixItApi api = FixItApi();
+
   String category = "Road";
   int severity = 3;
   bool submitting = false;
 
-  // 📍 Store the user's actual location
+  XFile? selectedImage;
+
   Position? currentPosition;
   bool gettingLocation = false;
-  String locationMessage = "Location not detected yet";
+  String locationMessage = "Tap the location icon to detect your location";
 
   @override
   void dispose() {
@@ -31,7 +39,27 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
     super.dispose();
   }
 
-  // 📍 Get the user's current location from the browser
+  Future<void> pickPhoto() async {
+    try {
+      final XFile? photo = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (photo != null && mounted) {
+        setState(() {
+          selectedImage = photo;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not select photo: $e")),
+      );
+    }
+  }
+
   Future<void> getCurrentLocation() async {
     setState(() {
       gettingLocation = true;
@@ -39,6 +67,31 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
     });
 
     try {
+      final serviceEnabled =
+          await Geolocator.isLocationServiceEnabled();
+
+      if (!serviceEnabled) {
+        throw Exception("Enable location services on your device.");
+      }
+
+      LocationPermission permission =
+          await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied) {
+        throw Exception("Location permission was denied.");
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception(
+          "Location permission is permanently denied. "
+          "Check your device settings.",
+        );
+      }
+
       final position = await Geolocator.getCurrentPosition();
 
       if (!mounted) return;
@@ -46,7 +99,7 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
       setState(() {
         currentPosition = position;
         locationMessage =
-            "Coordinates: ${position.latitude.toStringAsFixed(5)}, "
+            "${position.latitude.toStringAsFixed(5)}, "
             "${position.longitude.toStringAsFixed(5)}";
       });
     } catch (e) {
@@ -54,9 +107,12 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
 
       setState(() {
         currentPosition = null;
-        locationMessage =
-            "Could not get location. Allow location access in Chrome.";
+        locationMessage = "Location unavailable. Tap to try again.";
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not get location: $e")),
+      );
     } finally {
       if (mounted) {
         setState(() => gettingLocation = false);
@@ -74,7 +130,6 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
       return;
     }
 
-    // 📍 Make sure the user has detected their location first
     if (currentPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -86,25 +141,52 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
 
     setState(() => submitting = true);
 
-    // 🛠️ Send the report to the FixIt backend
     try {
-      await FixItApi().createReport(
+      // First create the report in the database.
+      final report = await api.createReport(
         title: titleController.text.trim(),
         category: category,
         severity: severity,
         description: descriptionController.text.trim(),
-        location: locationMessage,
+        location:
+            "GPS: ${currentPosition!.latitude}, "
+            "${currentPosition!.longitude}",
         latitude: currentPosition!.latitude,
         longitude: currentPosition!.longitude,
       );
+
+      // If a photo was selected, upload it using the new report ID.
+      if (selectedImage != null) {
+        final dynamic rawId = report["report_id"] ?? report["id"];
+
+        if (rawId == null) {
+          throw Exception(
+            "Report was created, but the server did not return its ID. "
+            "The photo could not be uploaded.",
+          );
+        }
+
+        final int reportId = rawId is int
+            ? rawId
+            : int.parse(rawId.toString());
+
+        await api.uploadReportImage(
+          reportId: reportId,
+          image: selectedImage!,
+        );
+      }
 
       if (!mounted) return;
 
       Navigator.pop(context);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Report submitted successfully."),
+        SnackBar(
+          content: Text(
+            selectedImage == null
+                ? "Report submitted successfully."
+                : "Report and photo submitted successfully.",
+          ),
         ),
       );
     } catch (e) {
@@ -112,7 +194,8 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Could not submit report: $e"),
+          content: Text("Could not complete submission: $e"),
+          duration: const Duration(seconds: 5),
         ),
       );
     } finally {
@@ -153,18 +236,63 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
             ),
             const SizedBox(height: 18),
 
-            // ⚒️ Photo upload will be implemented separately
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: submitting ? null : pickPhoto,
               icon: const Icon(Icons.add_a_photo_outlined),
-              label: const SizedBox(
+              label: SizedBox(
                 width: double.infinity,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text("Add photo evidence"),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    selectedImage == null
+                        ? "Add photo evidence"
+                        : "Change selected photo",
+                  ),
                 ),
               ),
             ),
+
+            if (selectedImage != null) ...[
+              const SizedBox(height: 12),
+              FutureBuilder<Uint8List>(
+                future: selectedImage!.readAsBytes(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Text("Could not preview this photo.");
+                  }
+
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      snapshot.data!,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: submitting
+                      ? null
+                      : () {
+                          setState(() {
+                            selectedImage = null;
+                          });
+                        },
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text("Remove photo"),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 15),
 
@@ -186,7 +314,11 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
                     (item) => ChoiceChip(
                       label: Text(item),
                       selected: category == item,
-                      onSelected: (_) => setState(() => category = item),
+                      onSelected: submitting
+                          ? null
+                          : (_) {
+                              setState(() => category = item);
+                            },
                     ),
                   )
                   .toList(),
@@ -207,7 +339,11 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
                 DropdownMenuItem(value: 4, child: Text("4 — Serious")),
                 DropdownMenuItem(value: 5, child: Text("5 — Critical")),
               ],
-              onChanged: (value) => setState(() => severity = value ?? 3),
+              onChanged: submitting
+                  ? null
+                  : (value) {
+                      setState(() => severity = value ?? 3);
+                    },
             ),
 
             const SizedBox(height: 14),
@@ -224,7 +360,6 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
 
             const SizedBox(height: 14),
 
-            // 📍 Display real coordinates instead of a hardcoded road name
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const CircleAvatar(
@@ -243,7 +378,7 @@ class _ReportHazardSheetState extends State<ReportHazardSheet> {
                     )
                   : IconButton(
                       icon: const Icon(Icons.my_location),
-                      onPressed: getCurrentLocation,
+                      onPressed: submitting ? null : getCurrentLocation,
                       tooltip: "Detect my location",
                     ),
             ),

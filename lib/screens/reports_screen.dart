@@ -130,15 +130,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 )
               else
                 ...reports.map((report) {
+                  
                   final title =
-                      (report["title"] ?? "Untitled report").toString();
+                      (report["TITLE"] ?? report["title"] ?? "Untitled report").toString();
                   final category =
-                      (report["category"] ?? "Other").toString();
+                      (report["CATEGORY"] ?? report["category"] ?? "Other").toString();
                   final status =
-                      (report["status"] ?? "Submitted").toString();
-                  final severity = report["severity"] ?? 1;
+                      (report["STATUS"] ?? report["status"] ?? "Submitted").toString();
+                  final severity = report["SEVERITY"] ?? report["severity"] ?? 1;
                   final location =
-                      (report["location"] ?? "Location unavailable").toString();
+                      (report["LOCATION"] ?? report["location"] ?? "Location unavailable").toString();
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),

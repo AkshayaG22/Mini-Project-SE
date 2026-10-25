@@ -1,58 +1,7 @@
-// import 'package:flutter/material.dart';
-// import 'screens/login_screen.dart';
-// import 'screens/homescreen.dart';
-// import 'screens/create_acc.dart';
-
-
-// void main() {
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'FixIt',
-//       theme: ThemeData(primarySwatch: Colors.blue),
-//       home: Builder(
-//         builder: (context) {
-//           return LoginScreen(
-//             onSignedIn: () {
-//               Navigator.pushReplacement(
-//                 context,
-//                 MaterialPageRoute(builder: (context) => const Homescreen()),
-//               );
-//             },
-//             onCreateAccount: () {
-//               Navigator.push(
-//                 context,
-//                 MaterialPageRoute(
-//                   builder: (context) => CreateAccountScreen(
-//                     onAccountCreated: () {
-//                       Navigator.pushReplacement(
-//                         context,
-//                         MaterialPageRoute(builder: (context) => const Homescreen()),
-//                       );
-//                     },
-//                     onBackToLogin: () {
-//                       Navigator.pop(context);
-//                     },
-//                   ),
-//                 ),
-//               );
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/create_acc.dart';
-import 'screens/fixit_appbar.dart'; // 👈 import your shell
+import 'screens/fixit_appbar.dart'; //to import the outer layouts
 
 void main() {
   runApp(const MyApp());
@@ -64,12 +13,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'FixIt',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: Builder(
         builder: (context) {
           return LoginScreen(
             onSignedIn: () {
+              //After login go to the outer shell instead of Homescreen uuuuuuuuuuuuuuuuu
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const FixItShell()),
@@ -81,6 +32,7 @@ class MyApp extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => CreateAccountScreen(
                     onAccountCreated: () {
+                      //After account creation also go to the outer layout
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => const FixItShell()),
@@ -99,3 +51,26 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// import 'package:flutter/material.dart';
+// import 'screens/fixit_appbar.dart'; // contains FixItShell
+
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'FixIt',
+//       theme: ThemeData(primarySwatch: Colors.blue),
+//       // 👇 Skip login, go straight to shell
+//       home: const FixItShell(),
+//     );
+//   }
+// }
+
+

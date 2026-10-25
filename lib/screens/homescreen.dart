@@ -12,12 +12,12 @@ class Homescreen extends StatelessWidget {
       children: [
         const Herocard(),
         const SizedBox(height: 24),
-        const SectionHeader(eyebrow: "AROUND YOU", title: "Live Hazard Map", action: "View map"),
+        const SectionHeader(eyebrow: "", title: "Live Hazard Map", action: "View map"),
         const SizedBox(height: 12),
         const HazardMap(height: 196),
         const SizedBox(height: 26),
         const SectionHeader(
-          eyebrow: "YOUR IMPACT",
+          eyebrow: "",
           title: "Recent reports",
           action: "See all",
         ),
@@ -36,56 +36,23 @@ class Herocard extends StatelessWidget {
     return Container(
       height: 218,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF094DCA), Color(0xFF2A7AED)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x3D0D57D5),
-            blurRadius: 30,
-            offset: Offset(0, 15),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF1E5FD8),
       ),
       child: Stack(
         children: [
-          Positioned(
-            right: -40,
-            bottom: -60,
-            child: Container(
-              width: 220,
-              height:220,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white12, width: 35),
-              ),
-            ),
-          ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white12,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: const Text(
-                    "●  CITY STATUS: ACTIVE",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      decoration: TextDecoration.none,
-                    ),
+                const Text(
+                  "",
+                  style: TextStyle(
+                    color: Color(0xFFBFD6F7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -93,9 +60,9 @@ class Herocard extends StatelessWidget {
                   "Spot it.\nWe'll help fix it.",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 29,
-                    height: 1.04,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 26,
+                    height: 1.2,
+                    fontWeight: FontWeight.w600,
                     decoration: TextDecoration.none,
                   ),
                 ),
@@ -105,9 +72,9 @@ class Herocard extends StatelessWidget {
                   child: Text(
                     "Report civic hazards and follow every step to resolution.",
                     style: TextStyle(
-                      color: Color(0xFFDBEAFE),
-                      fontSize: 13,
-                      height: 1.45,
+                      color: Color(0xFFD6E4F9),
+                      fontSize: 14,
+                      height: 1.4,
                       decoration: TextDecoration.none,
                     ),
                   ),
@@ -116,8 +83,7 @@ class Herocard extends StatelessWidget {
             ),
           ),
         ],
-      )
+      ),
     );
   }
 }
-

@@ -1,6 +1,7 @@
+
+import "dart:convert";
 import "package:flutter/material.dart";
 import "package:http/http.dart" as http;
-import "dart:convert";
 
 const _blue = Color(0xFF0D57D5);
 const _canvas = Color(0xFFF8FAFC);
@@ -28,7 +29,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final passwordController = TextEditingController();
 
   bool showPassword = false;
-  // bool acceptedTerms = false;
   bool submitting = false;
 
   @override
@@ -41,62 +41,78 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     super.dispose();
   }
 
-Future<void> createAccount() async {
-  if (!(formKey.currentState?.validate() ?? false)) return;
+  Future<void> createAccount() async {
+    if (!(formKey.currentState?.validate() ?? false)) return;
 
-  setState(() => submitting = true);
+    setState(() => submitting = true);
 
-  try {
-    final response = await http.post(
-      Uri.parse('http://127.0.0.1:8000/register'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'first_name': firstNameController.text.trim(),
-        'last_name': lastNameController.text.trim(),
-        'email': emailController.text.trim(),
-        'mobile_number': phoneController.text.trim(),
-        'password': passwordController.text,
-        'username': emailController.text.trim().split('@')[0],
-      }),
-    );
+    try {
+      final firstName = firstNameController.text.trim();
+      final lastName = lastNameController.text.trim();
+      final email = emailController.text.trim();
+      final phone = phoneController.text.replaceAll(RegExp(r"\D"), "");
+      final username = "$firstName $lastName".trim();
 
-    final data = jsonDecode(response.body);
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:8000/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'first_name': firstName,
+          'last_name': lastName,
+          'email': email,
+          'mobile_number': phone,
+          'password': passwordController.text,
+          'username': username,
+        }),
+      );
 
-    if (response.statusCode == 200) {
+      dynamic data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {
+        data = null;
+      }
+
+      if (!mounted) return;
+
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data is Map &&
+          data['message'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'].toString()),
+          ),
+        );
+        widget.onAccountCreated();
+      } else {
+        final message = data is Map
+            ? (data['detail'] ??
+                    data['message'] ??
+                    'Could not create account. Please try again.')
+                .toString()
+            : 'Could not create account. Please try again.';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Account created successfully!"),
+          content: Text(
+            'Could not connect to the FixIt server. '
+            'Check that your backend is running.',
+          ),
         ),
       );
-
-      widget.onAccountCreated();
-    } else {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(data["detail"] ?? "Could not create account"),
-        ),
-      );
-    }
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Could not connect to the server"),
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => submitting = false);
+    } finally {
+      if (mounted) {
+        setState(() => submitting = false);
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +197,9 @@ Future<void> createAccount() async {
                       ),
                       validator: (value) {
                         final email = value?.trim() ?? "";
-                        if (email.isEmpty) return "Enter your email address";
+                        if (email.isEmpty) {
+                          return "Enter your email address";
+                        }
                         if (!email.contains("@") || !email.contains(".")) {
                           return "Enter a valid email address";
                         }
@@ -206,8 +224,8 @@ Future<void> createAccount() async {
                           RegExp(r"\D"),
                           "",
                         );
-                        if (digits.length < 10) {
-                          return "Enter a valid mobile number";
+                        if (digits.length != 10) {
+                          return "Enter a valid 10-digit mobile number";
                         }
                         return null;
                       },
@@ -220,15 +238,17 @@ Future<void> createAccount() async {
                       obscureText: !showPassword,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.newPassword],
-                      onFieldSubmitted: (_) => createAccount(),
+                      onFieldSubmitted: (_) {
+                        if (!submitting) createAccount();
+                      },
                       decoration: _inputDecoration(
                         hintText: "At least 8 characters",
                         icon: Icons.lock_outline_rounded,
                       ).copyWith(
                         suffixIcon: IconButton(
-                          onPressed: () => setState(
-                            () => showPassword = !showPassword,
-                          ),
+                          onPressed: () {
+                            setState(() => showPassword = !showPassword);
+                          },
                           icon: Icon(
                             showPassword
                                 ? Icons.visibility_off_outlined
@@ -247,57 +267,6 @@ Future<void> createAccount() async {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    // Row(
-                    //   crossAxisAlignment: CrossAxisAlignment.start,
-                    //   children: [
-                    //     SizedBox(
-                    //       width: 24,
-                    //       height: 24,
-                    //       child: Checkbox(
-                    //         value: acceptedTerms,
-                    //         activeColor: _blue,
-                    //         shape: RoundedRectangleBorder(
-                    //           borderRadius: BorderRadius.circular(5),
-                    //         ),
-                    //         onChanged: (value) => setState(
-                    //           () => acceptedTerms = value ?? false,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     const SizedBox(width: 10),
-                    //     Expanded(
-                    //       child: Text.rich(
-                    //         TextSpan(
-                    //           style: const TextStyle(
-                    //             color: Color(0xFF475569),
-                    //             fontSize: 12,
-                    //             height: 1.55,
-                    //           ),
-                    //           children: const [
-                    //             TextSpan(text: "I agree to the "),
-                    //             TextSpan(
-                    //               text: "Terms of Service",
-                    //               style: TextStyle(
-                    //                 color: _blue,
-                    //                 fontWeight: FontWeight.w800,
-                    //               ),
-                    //             ),
-                    //             TextSpan(text: " and "),
-                    //             TextSpan(
-                    //               text: "Privacy Policy",
-                    //               style: TextStyle(
-                    //                 color: _blue,
-                    //                 fontWeight: FontWeight.w800,
-                    //               ),
-                    //             ),
-                    //             TextSpan(text: "."),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: submitting ? null : createAccount,
@@ -357,36 +326,6 @@ Future<void> createAccount() async {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    // Container(
-                    //   padding: const EdgeInsets.all(15),
-                    //   decoration: BoxDecoration(
-                    //     color: const Color(0xFFECFDF5),
-                    //     borderRadius: BorderRadius.circular(17),
-                    //     border: Border.all(color: const Color(0xFFD1FAE5)),
-                    //   ),
-                    //   // child: const Row(
-                    //   //   crossAxisAlignment: CrossAxisAlignment.start,
-                    //   //   children: [
-                    //   //     Icon(
-                    //   //       Icons.verified_user_outlined,
-                    //   //       color: Color(0xFF047857),
-                    //   //       size: 20,
-                    //   //     ),
-                    //   //     SizedBox(width: 10),
-                    //   //     // Expanded(
-                    //   //     //   child: Text(
-                    //   //     //     "Privacy first. Your contact details are used only for report updates and account security.",
-                    //   //     //     style: TextStyle(
-                    //   //     //       color: Color(0xFF065F46),
-                    //   //     //       fontSize: 11,
-                    //   //     //       height: 1.5,
-                    //   //     //     ),
-                    //   //     //   ),
-                    //   //     // ),
-                    //   //   ],
-                    //   // ),
-                    // ),
                   ],
                 ),
               ),
@@ -405,32 +344,40 @@ Future<void> createAccount() async {
     return InputDecoration(
       hintText: hintText,
       prefixText: prefixText,
-      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-      prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
+      hintStyle: const TextStyle(
+        color: Color(0xFF94A3B8),
+        fontSize: 13,
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: const Color(0xFF64748B),
+        size: 20,
+      ),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 18,
+        horizontal: 16,
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: _blue, width: 1.5),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFFEF4444)),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        borderSide: const BorderSide(
+          color: Color(0xFFEF4444),
+          width: 1.5,
+        ),
       ),
-      
     );
   }
 }
@@ -458,7 +405,11 @@ class _AccountHeader extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(Icons.check_rounded, color: Colors.white, size: 26),
+          child: const Icon(
+            Icons.check_rounded,
+            color: Colors.white,
+            size: 26,
+          ),
         ),
         const SizedBox(width: 12),
         const Column(
@@ -475,7 +426,10 @@ class _AccountHeader extends StatelessWidget {
             ),
             Text(
               "A better city starts with you",
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 10,
+              ),
             ),
           ],
         ),
@@ -529,12 +483,13 @@ class _NameField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(
+                color: Color(0xFFE2E8F0),
+              ),
             ),
           ),
-          validator: (value) => (value?.trim().isEmpty ?? true)
-              ? "Required"
-              : null,
+          validator: (value) =>
+              (value?.trim().isEmpty ?? true) ? "Required" : null,
         ),
       ],
     );
